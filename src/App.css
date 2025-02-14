@@ -1,0 +1,112 @@
+#root {
+  /* max-width: 1280px; */
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+.layout {
+  display: flex;
+  gap: 20px;
+  width: 100vw;
+}
+
+.navbar {
+  /* background-color: yellowgreen; */
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: auto;
+}
+
+.content-layout {
+  /* background-color: red; */
+  width: 100%;
+  height: 100vh;
+}
+
+.modal {
+  background-color: #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  border-radius: 16px;
+  border: 0.01px solid;
+  padding: 10px;
+  width: 500px;
+  height: 87vh;
+  overflow-y: auto; /* Enable vertical scrolling */
+  overflow-x: hidden; /* Hide horizontal scrolling */
+  white-space: nowrap; /* Prevent text from wrapping */
+  margin-top: 10px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-top: 0.01px solid #888;
+  height: 35px;
+  flex-shrink: 0; /* Prevent the element from shrinking */
+  overflow: hidden; /* Prevent content from breaking layout */
+}
+
+.option p {
+  white-space: nowrap; /* Prevents text from wrapping */
+  overflow: hidden; /* Hides overflowing text */
+  text-overflow: ellipsis; /* Adds "..." for overflowing text */
+}
+
+.search_bar {
+  height: 30px;
+  padding-left: 25px;
+  padding-top: 10px;
+  padding-bottom: 5px;
+}
+
+.check {
+  padding-left: 20px;
+  width: 0px;
+  height: 20px;
+  background-color: #888;
+  cursor: pointer;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header button {
+  border: none;
+}
+
+.modal-header button:hover {
+  text-decoration: underline;
+  border: none;
+}
+
+.rezultat {
+  display: flex;
+}
+
+.result-btn {
+  background-color: rgba(255, 255, 255, 0.2); /* Alb cu transparență */
+  box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.5); /* Umbre albe */
+  border-radius: 10px;
+  margin-top: 10px;
+}
+
+.copy-btn {
+  background-color: rgba(255, 255, 255, 0.1); /* Alb cu transparență */
+  box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.5); /* Umbre albe */
+  border-radius: 10px;
+  margin-top: 10px;
+}
