@@ -39,12 +39,13 @@
   border-radius: 16px;
   border: 0.01px solid;
   padding: 10px;
-  width: 500px;
+  width: 650px;
   height: 87vh;
   overflow-y: auto; /* Enable vertical scrolling */
   overflow-x: hidden; /* Hide horizontal scrolling */
   white-space: nowrap; /* Prevent text from wrapping */
   margin-top: 10px;
+  margin-left: 30px;
 }
 
 .option {
@@ -76,6 +77,7 @@
   height: 20px;
   background-color: #888;
   cursor: pointer;
+  border-radius: 50%;
 }
 
 .modal-header {
@@ -99,14 +101,20 @@
 
 .result-btn {
   background-color: rgba(255, 255, 255, 0.2); /* Alb cu transparență */
-  box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.5); /* Umbre albe */
   border-radius: 10px;
   margin-top: 10px;
 }
 
 .copy-btn {
   background-color: rgba(255, 255, 255, 0.1); /* Alb cu transparență */
-  box-shadow: 0px 0px 10px rgba(255, 255, 255, 0.5); /* Umbre albe */
   border-radius: 10px;
-  margin-top: 10px;
+}
+
+.reset-btn {
+  background-color: rgba(199, 98, 98, 0.2);
+  margin-top: 20px;
+}
+
+.reset-btn:hover {
+  border-color: rgb(145, 81, 81);
 }
