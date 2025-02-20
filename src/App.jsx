@@ -1236,35 +1236,93 @@ function App() {
 
   const rezultatRef = useRef(null);
 
+  // const handleCopyContent = () => {
+  //   const maxLength = Math.max(
+  //     rezultat.sectiune_rezultat.length,
+  //     rezultat.diviziune_rezultat.length,
+  //     rezultat.grupa_rezultat.length,
+  //     rezultat.caen_rezultat.length
+  //   );
+
+  //   let rows = [];
+  //   rows.push(["Sectiune", "Diviziune", "Grupa", "Caen"].join("\t")); // Header row
+
+  //   for (let i = 0; i < maxLength; i++) {
+  //     let row = [
+  //       rezultat.sectiune_rezultat[i] || "", // Avoid undefined values
+  //       rezultat.diviziune_rezultat[i] || "",
+  //       rezultat.grupa_rezultat[i] || "",
+  //       rezultat.caen_rezultat[i] || "",
+  //     ];
+  //     rows.push(row.join("\t")); // Join values with a tab for Excel columns
+  //   }
+
+  //   const textToCopy = rows.join("\n"); // Join rows with new line
+
+  //   navigator.clipboard
+  //     .writeText(textToCopy)
+  //     .then(() => {
+  //       alert("Content copied in Excel format!");
+  //     })
+  //     .catch((err) => console.error("Failed to copy: ", err));
+  // };
+
   const handleCopyContent = () => {
-    const maxLength = Math.max(
-      rezultat.sectiune_rezultat.length,
-      rezultat.diviziune_rezultat.length,
-      rezultat.grupa_rezultat.length,
-      rezultat.caen_rezultat.length
-    );
+    // First get all filtered rows
+    const filteredRows = caens.filter((item) => caenuri[item.Codul_caen]);
 
-    let rows = [];
-    rows.push(["Sectiune", "Diviziune", "Grupa", "Caen"].join("\t")); // Header row
+    // Create objects to store unique values
+    const uniqueValues = {
+      Sectiune: [...new Set(filteredRows.map((item) => item.Sectiunea))],
+      Diviziune: [...new Set(filteredRows.map((item) => item.Diviziunea))],
+      Grupa: [...new Set(filteredRows.map((item) => item.Grupa))],
+      Codul_caen: [...new Set(filteredRows.map((item) => item.Codul_caen))],
+      Category: [...new Set(filteredRows.map((item) => item.Category))],
+      Industry_Hubspot: [
+        ...new Set(filteredRows.map((item) => item.Industry_Hubspot)),
+      ],
+    };
 
-    for (let i = 0; i < maxLength; i++) {
-      let row = [
-        rezultat.sectiune_rezultat[i] || "", // Avoid undefined values
-        rezultat.diviziune_rezultat[i] || "",
-        rezultat.grupa_rezultat[i] || "",
-        rezultat.caen_rezultat[i] || "",
-      ];
-      rows.push(row.join("\t")); // Join values with a tab for Excel columns
+    // Create columns with headers
+    let columns = [];
+    for (const [header, values] of Object.entries(uniqueValues)) {
+      // Add header
+      let column = [header];
+      // Add all unique values
+      column = column.concat(values);
+      columns.push(column);
     }
 
-    const textToCopy = rows.join("\n"); // Join rows with new line
+    // Find the maximum length of any column
+    const maxLength = Math.max(...columns.map((col) => col.length));
 
+    // Pad shorter columns with empty strings to match the longest column
+    columns = columns.map((col) => {
+      while (col.length < maxLength) {
+        col.push("");
+      }
+      return col;
+    });
+
+    // Transpose the data to create rows
+    const rows = [];
+    for (let i = 0; i < maxLength; i++) {
+      const row = columns.map((col) => col[i] || "").join("\t");
+      rows.push(row);
+    }
+
+    // Join all rows with newlines
+    const content = rows.join("\n");
+
+    // Copy to clipboard
     navigator.clipboard
-      .writeText(textToCopy)
+      .writeText(content)
       .then(() => {
-        alert("Content copied in Excel format!");
+        alert("Valori unice copiate în format Excel!");
       })
-      .catch((err) => console.error("Failed to copy: ", err));
+      .catch((err) => {
+        console.error("Eroare la copiere: ", err);
+      });
   };
 
   const handleCopyContentCaen = () => {
@@ -2412,14 +2470,14 @@ function App() {
         >
           Rezultat
         </button>
-        <button onClick={handleCopySelected} className="copy-btn">
-          Copiaza tot
-        </button>
-        <button onClick={handleCopyContent} className="copy-btn">
-          Copiaza rezultat
-        </button>
         <button onClick={handleCopyContentCaen} className="copy-btn">
           Copiaza Cod Caen
+        </button>
+        <button onClick={handleCopyContent} className="copy-btn">
+          Copiaza rezultat valori unice
+        </button>
+        <button onClick={handleCopySelected} className="copy-btn">
+          Copiaza tot
         </button>
         <button onClick={handleResetAll} className="reset-btn">
           Reseteaza tot
