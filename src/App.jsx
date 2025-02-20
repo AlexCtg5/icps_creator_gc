@@ -2417,44 +2417,44 @@ function App() {
     setRezultatAfis(false);
   };
 
-  const handleCopySelected = () => {
-    // Definește antetul pentru tabel (colonasele dorite)
-    const header = [
-      "Sectiune",
-      "Diviziune",
-      "Grupa",
-      "Codul_caen",
-      "Category",
-      "Industry_Hubspot",
-    ].join("\t");
+  // const handleCopySelected = () => {
+  //   // Definește antetul pentru tabel (colonasele dorite)
+  //   const header = [
+  //     "Sectiune",
+  //     "Diviziune",
+  //     "Grupa",
+  //     "Codul_caen",
+  //     "Category",
+  //     "Industry_Hubspot",
+  //   ].join("\t");
 
-    // Filtrează lista pentru elementele cu codul CAEN activ (true) și construiește rândurile tabelului
-    const rows = caens
-      .filter((item) => caenuri[item.Codul_caen])
-      .map((item) =>
-        [
-          item.Sectiunea,
-          item.Diviziunea,
-          item.Grupa,
-          item.Codul_caen,
-          item.Category,
-          item.Industry_Hubspot,
-        ].join("\t")
-      );
+  //   // Filtrează lista pentru elementele cu codul CAEN activ (true) și construiește rândurile tabelului
+  //   const rows = caens
+  //     .filter((item) => caenuri[item.Codul_caen])
+  //     .map((item) =>
+  //       [
+  //         item.Sectiunea,
+  //         item.Diviziunea,
+  //         item.Grupa,
+  //         item.Codul_caen,
+  //         item.Category,
+  //         item.Industry_Hubspot,
+  //       ].join("\t")
+  //     );
 
-    // Unește antetul și rândurile cu un newline pentru a crea formatul tabelar
-    const content = [header, ...rows].join("\n");
+  //   // Unește antetul și rândurile cu un newline pentru a crea formatul tabelar
+  //   const content = [header, ...rows].join("\n");
 
-    // Copiază textul în clipboard
-    navigator.clipboard
-      .writeText(content)
-      .then(() => {
-        alert("Conținut copiat în format Excel!");
-      })
-      .catch((err) => {
-        console.error("Eroare la copiere: ", err);
-      });
-  };
+  //   // Copiază textul în clipboard
+  //   navigator.clipboard
+  //     .writeText(content)
+  //     .then(() => {
+  //       alert("Conținut copiat în format Excel!");
+  //     })
+  //     .catch((err) => {
+  //       console.error("Eroare la copiere: ", err);
+  //     });
+  // };
 
   return (
     <div className="layout">
@@ -2474,11 +2474,9 @@ function App() {
           Copiaza Cod Caen
         </button>
         <button onClick={handleCopyContent} className="copy-btn">
-          Copiaza rezultat valori unice
-        </button>
-        <button onClick={handleCopySelected} className="copy-btn">
           Copiaza tot
         </button>
+
         <button onClick={handleResetAll} className="reset-btn">
           Reseteaza tot
         </button>
