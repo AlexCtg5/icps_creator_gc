@@ -39,7 +39,7 @@
   border-radius: 16px;
   border: 0.01px solid;
   padding: 10px;
-  width: 650px;
+  width: 800px;
   height: 87vh;
   overflow-y: auto; /* Enable vertical scrolling */
   overflow-x: hidden; /* Hide horizontal scrolling */
@@ -97,6 +97,7 @@
 
 .rezultat {
   display: flex;
+  gap: 20px;
 }
 
 .result-btn {
@@ -117,4 +118,9 @@
 
 .reset-btn:hover {
   border-color: rgb(145, 81, 81);
+}
+
+.sectiune {
+  width: auto;
+  min-width: 130px;
 }
