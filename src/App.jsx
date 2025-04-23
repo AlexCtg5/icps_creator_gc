@@ -1,13 +1,13 @@
-import { useRef, useState } from "react";
+import React, { useRef, useState, useMemo } from "react"; // Import useMemo
 import "./App.css";
-import caens from "./jsons/caen.jsx";
+import caens from "./jsons/caen.jsx"; // Asigură-te că path-ul e corect
 import {
   coduri_caen_v,
   grupe_v,
   diviziuni_v,
   sectiuni_v,
-  industrii_v,
-} from "./Components/variables.jsx";
+  // industrii_v, // Nu pare folosit, poate fi eliminat dacă nu e necesar
+} from "./Components/variables.jsx"; // Asigură-te că path-ul e corect
 import {
   handleRezultat,
   handleSearchSectiune,
@@ -24,8 +24,8 @@ import {
   handleToggleAllDepartments,
   handleJob,
   handleToggleAllJobs,
-} from "./Components/functions.jsx";
-import { job_titles_by_department } from "./jsons/caen.jsx";
+} from "./Components/functions.jsx"; // Asigură-te că path-ul e corect
+import { job_titles_by_department } from "./jsons/caen.jsx"; // Asigură-te că path-ul e corect
 
 function App() {
   const [rezultatAfis, setRezultatAfis] = useState(false);
@@ -33,11 +33,14 @@ function App() {
   const handleRezAfis = () => {
     setRezultatAfis(!rezultatAfis);
   };
-  const [caenuri, setCaenuri] = useState(coduri_caen_v);
-  const [grupe, setGrupe] = useState(grupe_v);
-  const [diviziuni, setDiviziuni] = useState(diviziuni_v);
+
+  // --- State declarations ---
   const [searchSectiune, setSearchSectiune] = useState(sectiuni_v);
+  const [diviziuni, setDiviziuni] = useState(diviziuni_v);
+  const [grupe, setGrupe] = useState(grupe_v);
+  const [caenuri, setCaenuri] = useState(coduri_caen_v);
   const [jobTitles, setJobTitles] = useState(job_titles_by_department);
+
   const [portie, setPortie] = useState({
     sectiune: false,
     diviziune: false,
@@ -47,12 +50,15 @@ function App() {
     job_title: false,
   });
 
-  const [searchTerm, setSearchTerm] = useState(""); // State for the search bar input
-  const [searchDiviziune, setSearchDiviziune] = useState(""); // Search for Diviziune
+  // Search terms
+  const [searchTerm, setSearchTerm] = useState(""); // Sectiune search
+  const [searchDiviziune, setSearchDiviziune] = useState("");
   const [searchGrupe, setSearchGrupe] = useState("");
   const [searchCaenuri, setSearchCaenuri] = useState("");
   const [searchDepartment, setSearchDepartment] = useState("");
   const [searchJob, setSearchJob] = useState("");
+
+  // Results and other inputs
   const [rezultat, setRezultat] = useState({
     sectiune_rezultat: [],
     diviziune_rezultat: [],
@@ -63,109 +69,102 @@ function App() {
   const [cifraAfacere, setCifraAfacere] = useState("");
   const [profit, setProfit] = useState("");
 
-  const uniqueDiviziuni = Array.from(
-    new Set(
-      caens
-        .filter((item) => searchSectiune[item.Sectiunea])
-        .map((item) => item.Diviziunea)
-    )
-  );
+  // --- Memoized Calculations ---
 
-  const uniqueGrupe = Array.from(
-    new Set(
-      caens
-        .filter((item) => diviziuni[item.Diviziunea])
-        .map((item) => item.Grupa)
-    )
-  );
+  // Filter Sectiuni based on searchTerm
+  const filteredSectiuni = useMemo(() => {
+    const allSectiuni = [...new Set(caens.map((caen) => caen.Sectiunea))];
+    if (!searchTerm) return allSectiuni;
+    return allSectiuni.filter((sectiune) =>
+      sectiune.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [caens, searchTerm]); // Dependency: caens data and search term
 
-  const uniqueCaen = Array.from(
-    new Set(
-      caens.filter((item) => grupe[item.Grupa]).map((item) => item.Codul_caen)
-    )
-  );
+  // Calculate unique Diviziuni based on selected Sectiuni
+  const uniqueDiviziuni = useMemo(() => {
+    return Array.from(
+      new Set(
+        caens
+          .filter((item) => searchSectiune[item.Sectiunea]) // Filter by selected sectiuni
+          .map((item) => item.Diviziunea)
+      )
+    );
+  }, [caens, searchSectiune]); // Dependency: caens data and selected sectiuni state
 
-  const filteredSectiuni = [
-    ...new Set(caens.map((caen) => caen.Sectiunea)),
-  ].filter((sectiune) =>
-    sectiune.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter Diviziuni based on searchDiviziune
+  const filteredDiviziuni = useMemo(() => {
+    if (!searchDiviziune) return uniqueDiviziuni;
+    return uniqueDiviziuni.filter((diviziune) =>
+      diviziune.toLowerCase().includes(searchDiviziune.toLowerCase())
+    );
+  }, [uniqueDiviziuni, searchDiviziune]); // Dependency: calculated uniqueDiviziuni and its search term
 
-  const filteredDiviziuni = uniqueDiviziuni.filter((diviziune) =>
-    diviziune.toLowerCase().includes(searchDiviziune.toLowerCase())
-  );
+  // Calculate unique Grupe based on selected Diviziuni
+  const uniqueGrupe = useMemo(() => {
+    return Array.from(
+      new Set(
+        caens
+          .filter((item) => diviziuni[item.Diviziunea]) // Filter by selected diviziuni
+          .map((item) => item.Grupa)
+      )
+    );
+  }, [caens, diviziuni]); // Dependency: caens data and selected diviziuni state
 
-  const filteredGrupe = uniqueGrupe.filter((grupa) =>
-    grupa.toLowerCase().includes(searchGrupe.toLowerCase())
-  );
+  // Filter Grupe based on searchGrupe
+  const filteredGrupe = useMemo(() => {
+    if (!searchGrupe) return uniqueGrupe;
+    return uniqueGrupe.filter((grupa) =>
+      grupa.toLowerCase().includes(searchGrupe.toLowerCase())
+    );
+  }, [uniqueGrupe, searchGrupe]); // Dependency: calculated uniqueGrupe and its search term
 
-  const filteredDepartments = Object.keys(jobTitles).filter((department) =>
-    department.toLowerCase().includes(searchDepartment.toLowerCase())
-  );
+  // Calculate unique Caen codes based on selected Grupe
+  const uniqueCaen = useMemo(() => {
+    return Array.from(
+      new Set(
+        caens
+          .filter((item) => grupe[item.Grupa]) // Filter by selected grupe
+          .map((item) => item.Codul_caen)
+      )
+    );
+  }, [caens, grupe]); // Dependency: caens data and selected grupe state
 
-  const filteredCaen = uniqueCaen.filter((caen) =>
-    caen.toLowerCase().includes(searchCaenuri.toLowerCase())
-  );
+  // Filter Caen codes based on searchCaenuri
+  const filteredCaen = useMemo(() => {
+    if (!searchCaenuri) return uniqueCaen;
+    return uniqueCaen.filter((caen) =>
+      caen.toLowerCase().includes(searchCaenuri.toLowerCase())
+    );
+  }, [uniqueCaen, searchCaenuri]); // Dependency: calculated uniqueCaen and its search term
 
-  const rezultatRef = useRef(null);
+  // Filter Departments based on searchDepartment
+  const filteredDepartments = useMemo(() => {
+    const allDepartments = Object.keys(jobTitles);
+    if (!searchDepartment) return allDepartments;
+    return allDepartments.filter((department) =>
+      department.toLowerCase().includes(searchDepartment.toLowerCase())
+    );
+  }, [jobTitles, searchDepartment]); // Dependency: jobTitles data and its search term
 
-  // const handleCopyContent = () => {
-  //   // First get all filtered rows
-  //   const filteredRows = caens.filter((item) => caenuri[item.Codul_caen]);
-
-  //   // Create objects to store unique values
-  //   const uniqueValues = {
-  //     NumeICP: [numeICP],
-  //     Industry_Hubspot: [
-  //       ...new Set(filteredRows.map((item) => item.Industry_Hubspot)),
-  //     ],
-  //     Category: [...new Set(filteredRows.map((item) => item.Category))],
-  //     Sectiune: [...new Set(filteredRows.map((item) => item.Sectiunea))],
-  //     Diviziune: [...new Set(filteredRows.map((item) => item.Diviziunea))],
-  //     Grupa: [...new Set(filteredRows.map((item) => item.Grupa))],
-  //     Codul_caen: [...new Set(filteredRows.map((item) => item.Codul_caen))],
-  //     Cifra_Afacere: [cifraAfacere],
-  //     Profit: [profit],
-  //   };
-
-  //   // Create a single row where each cell contains the entire array with line breaks
-  //   const headers = Object.keys(uniqueValues);
-  //   const arrayValues = Object.values(uniqueValues).map(
-  //     (array) =>
-  //       // Format array values with line breaks (Alt+Enter in Excel) and wrap in quotes
-  //       `"${array
-  //         .map((value) => value.toString().replace(/"/g, '""'))
-  //         .join("\n")}"`
-  //   );
-
-  //   // Create content with headers and arrays
-  //   const headerRow = headers.join("\t");
-  //   const valueRow = arrayValues.join("\t");
-  //   const content = `${headerRow}\n${valueRow}`;
-
-  //   // Copy to clipboard
-  //   navigator.clipboard
-  //     .writeText(content)
-  //     .then(() => {
-  //       alert("Valori unice copiate în format Excel!");
-  //     })
-  //     .catch((err) => {
-  //       console.error("Eroare la copiere: ", err);
-  //     });
-  // };
+  // --- Refs and Handlers ---
+  const rezultatRef = useRef(null); // Currently not used, but kept if needed later
 
   const handleCopyContent = () => {
-    // First get all filtered rows (for your other columns)
+    // Get rows filtered by the final selected CAEN codes
     const filteredRows = caens.filter((item) => caenuri[item.Codul_caen]);
 
     // Get active departments and their active job titles
     const activeDepartmentsJobs = {};
     Object.keys(jobTitles).forEach((department) => {
       if (jobTitles[department].state) {
+        // Check if department itself is active
         const activeJobs = Object.keys(jobTitles[department].job_titles).filter(
-          (jobTitle) => jobTitles[department].job_titles[jobTitle]
+          (jobTitle) => jobTitles[department].job_titles[jobTitle] // Check if job title is active
         );
-        activeDepartmentsJobs[department] = activeJobs;
+        // Only add department if it has active jobs
+        if (activeJobs.length > 0) {
+          activeDepartmentsJobs[department] = activeJobs;
+        }
       }
     });
 
@@ -173,16 +172,20 @@ function App() {
     const uniqueValues = {
       NumeICP: [numeICP],
       Industry_Hubspot: [
-        ...new Set(filteredRows.map((item) => item.Industry_Hubspot)),
+        ...new Set(filteredRows.map((item) => item.Industry_Hubspot || "")), // Handle potential undefined
       ],
-      Category: [...new Set(filteredRows.map((item) => item.Category))],
-      Sectiune: [...new Set(filteredRows.map((item) => item.Sectiunea))],
-      Diviziune: [...new Set(filteredRows.map((item) => item.Diviziunea))],
-      Grupa: [...new Set(filteredRows.map((item) => item.Grupa))],
-      Codul_caen: [...new Set(filteredRows.map((item) => item.Codul_caen))],
+      Category: [...new Set(filteredRows.map((item) => item.Category || ""))], // Handle potential undefined
+      Sectiune: [...new Set(filteredRows.map((item) => item.Sectiunea || ""))], // Handle potential undefined
+      Diviziune: [
+        ...new Set(filteredRows.map((item) => item.Diviziunea || "")),
+      ], // Handle potential undefined
+      Grupa: [...new Set(filteredRows.map((item) => item.Grupa || ""))], // Handle potential undefined
+      Codul_caen: [
+        ...new Set(filteredRows.map((item) => item.Codul_caen || "")),
+      ], // Handle potential undefined
       Cifra_Afacere: [cifraAfacere],
       Profit: [profit],
-      ...activeDepartmentsJobs, // Spread in each active department as a column with its jobs
+      ...activeDepartmentsJobs, // Spread in each active department as a column with its active jobs
     };
 
     // Create headers and format each cell's value with line breaks (for Excel)
@@ -190,7 +193,7 @@ function App() {
     const arrayValues = Object.values(uniqueValues).map(
       (array) =>
         `"${array
-          .map((value) => value.toString().replace(/"/g, '""'))
+          .map((value) => (value ? value.toString().replace(/"/g, '""') : "")) // Ensure value exists before toString
           .join("\n")}"`
     );
 
@@ -199,7 +202,6 @@ function App() {
     const valueRow = arrayValues.join("\t");
     const content = `${headerRow}\n${valueRow}`;
 
-    // Copy the content to the clipboard
     navigator.clipboard
       .writeText(content)
       .then(() => {
@@ -207,6 +209,7 @@ function App() {
       })
       .catch((err) => {
         console.error("Eroare la copiere: ", err);
+        alert("A apărut o eroare la copiere!"); // User feedback on error
       });
   };
 
@@ -221,45 +224,62 @@ function App() {
     setProfit(e.target.value);
   };
 
+  // --- Reset Handler ---
+  const handleResetWrapper = () => {
+    handleResetAll(
+      setRezultat,
+      setPortie,
+      setSearchSectiune,
+      setDiviziuni,
+      setGrupe,
+      setCaenuri,
+      setRezultatAfis,
+      setNumeICP,
+      setCifraAfacere,
+      setProfit,
+      setJobTitles
+    );
+    // Reset search terms too
+    setSearchTerm("");
+    setSearchDiviziune("");
+    setSearchGrupe("");
+    setSearchCaenuri("");
+    setSearchDepartment("");
+    setSearchJob("");
+  };
+
+  // --- JSX Structure ---
   return (
     <div className="layout">
       <div className="navbar">
         <input
-          placeholder="Nume ICP ..."
+          className="input-field"
+          placeholder="Nume ICP..."
           value={numeICP}
           onChange={handleNume}
-          style={{
-            height: "25px",
-            marginBottom: "5px",
-            paddingLeft: "10px",
-          }}
-        ></input>
-        {/* <button
-          onClick={() => handlePortie("industrie", setPortie, setRezultatAfis)}
-        >
-          Industrie
-        </button> */}
+        />
+
         <button
           onClick={() => handlePortie("sectiune", setPortie, setRezultatAfis)}
-          className="nav-btn"
+          className={`nav-btn ${portie.sectiune ? "active" : ""}`}
         >
           Sectiune
         </button>
         <button
           onClick={() => handlePortie("diviziune", setPortie, setRezultatAfis)}
-          className="nav-btn"
+          className={`nav-btn ${portie.diviziune ? "active" : ""}`}
         >
           Diviziune
         </button>
         <button
           onClick={() => handlePortie("grupa", setPortie, setRezultatAfis)}
-          className="nav-btn"
+          className={`nav-btn ${portie.grupa ? "active" : ""}`}
         >
           Grupa
         </button>
         <button
           onClick={() => handlePortie("caenuri", setPortie, setRezultatAfis)}
-          className="nav-btn"
+          className={`nav-btn ${portie.caenuri ? "active" : ""}`}
         >
           Caen
         </button>
@@ -267,34 +287,40 @@ function App() {
           onClick={() =>
             handlePortie("departament", setPortie, setRezultatAfis)
           }
-          className="nav-btn"
+          className={`nav-btn ${portie.departament ? "active" : ""}`}
         >
           Job Department
         </button>
         <button
           onClick={() => handlePortie("job_title", setPortie, setRezultatAfis)}
-          className="nav-btn"
+          className={`nav-btn ${portie.job_title ? "active" : ""}`}
         >
           Job Title
         </button>
-        <div>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <p style={{ width: "70px", fontWeight: "bold" }}>CA</p>
+
+        <div className="finance-inputs">
+          <div className="input-group">
+            <label htmlFor="cifraAfacereInput">CA</label>
             <input
-              style={{ height: "20px", width: "100px", paddingLeft: "5px" }}
+              id="cifraAfacereInput"
+              className="input-field small-input"
               value={cifraAfacere}
               onChange={handleCifraAfacereChange}
-            ></input>
+              placeholder="Valoare..."
+            />
           </div>
-          <div style={{ display: "flex", alignItems: "center" }}>
-            <p style={{ width: "70px", fontWeight: "bold" }}>PROFIT</p>
+          <div className="input-group">
+            <label htmlFor="profitInput">Profit</label>
             <input
-              style={{ height: "20px", width: "100px", paddingLeft: "5px" }}
+              id="profitInput"
+              className="input-field small-input"
               value={profit}
               onChange={handleProfitChange}
-            ></input>
+              placeholder="Valoare..."
+            />
           </div>
         </div>
+
         <button
           onClick={() =>
             handleRezultat(
@@ -307,492 +333,406 @@ function App() {
               setPortie
             )
           }
-          style={{ marginTop: "50px" }}
           className="result-btn"
         >
-          Rezultat
+          Vezi Rezultat
         </button>
         <button onClick={handleCopyContent} className="copy-btn">
-          Copiaza tot
+          Copiaza tot (Excel)
         </button>
-
-        <button
-          onClick={() =>
-            handleResetAll(
-              setRezultat,
-              setPortie,
-              setSearchSectiune,
-              setDiviziuni,
-              setGrupe,
-              setCaenuri,
-              setRezultatAfis,
-              setNumeICP,
-              setCifraAfacere,
-              setProfit,
-              setJobTitles
-            )
-          }
-          className="reset-btn"
-        >
+        <button onClick={handleResetWrapper} className="reset-btn">
           Reseteaza tot
         </button>
       </div>
+      {/* --- Content Area (Modals and Results) --- */}
       <div className="content-layout">
-        {/* <div className="portie">
-          <div>
-            {portie.industrie && (
-              <div className="modal">
-                <div className="modal-header">
-                  <input
-                    type="text"
-                    placeholder="Industrie..."
-                    value={searchIndustrie}
-                    onChange={(e) => setSearchIndustrie(e.target.value)}
-                    style={{
-                      margin: "10px 0",
-                      padding: "5px",
-                      width: "50%",
-                      borderRadius: "5px",
-                      border: "1px solid #ccc",
-                    }}
-                  />
-                  <div>
-                    <button
-                      onClick={() =>
-                        handleToggleAllSectiuni(true, setSearchSectiune)
-                      }
-                    >
-                      Select all
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleToggleAllSectiuni(false, setSearchSectiune)
-                      }
-                    >
-                      Clear
-                    </button>
-                  </div>
+        {/* Modals Container */}
+        <div className="modals-container">
+          {portie.sectiune && (
+            <div className="modal">
+              <div className="modal-header">
+                <h3>Selectează Secțiuni</h3>
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Caută Secțiune..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                <div className="modal-actions">
+                  <button
+                    onClick={() =>
+                      handleToggleAllSectiuni(true, setSearchSectiune)
+                    }
+                  >
+                    Toate
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleToggleAllSectiuni(false, setSearchSectiune)
+                    }
+                  >
+                    Niciuna
+                  </button>
                 </div>
-                {filteredIndustrii.map((industrie) => (
-                  <div className="option" key={industrie}>
-                    <div
-                      className="check"
-                      onClick={() =>
-                        handleSearchSectiune(industrie, setSearchIndustrie)
-                      }
-                      style={{
-                        backgroundColor: searchIndustrie[industrie]
-                          ? "#646cff"
-                          : "",
-                      }}
-                    ></div>
-                    <p>{industrie}</p>
-                  </div>
-                ))}
               </div>
-            )}
-          </div>
-        </div> */}
-        <div className="portie">
-          <div>
-            {portie.sectiune && (
-              <div className="modal">
-                <div className="modal-header">
-                  <input
-                    type="text"
-                    placeholder="Search Sectiune..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{
-                      margin: "10px 0",
-                      padding: "5px",
-                      width: "50%",
-                      borderRadius: "5px",
-                      border: "1px solid #ccc",
-                    }}
-                  />
-                  <div>
-                    <button
-                      onClick={() =>
-                        handleToggleAllSectiuni(true, setSearchSectiune)
-                      }
-                    >
-                      Select all
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleToggleAllSectiuni(false, setSearchSectiune)
-                      }
-                    >
-                      Clear
-                    </button>
-                  </div>
-                </div>
+              <div className="modal-content">
                 {filteredSectiuni.map((sectiune) => (
                   <div className="option" key={sectiune}>
+                    {" "}
+                    {/* KEY: unique string */}
                     <div
-                      className="check"
+                      className={`check ${
+                        searchSectiune[sectiune] ? "checked" : ""
+                      }`}
                       onClick={() =>
                         handleSearchSectiune(sectiune, setSearchSectiune)
                       }
-                      style={{
-                        backgroundColor: searchSectiune[sectiune]
-                          ? "#646cff"
-                          : "",
-                      }}
                     ></div>
                     <p>{sectiune}</p>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        </div>
-        <div className="portie">
-          <div>
-            {portie.diviziune && (
-              <div className="modal">
-                <div className="modal-header">
-                  <input
-                    type="text"
-                    placeholder="Diviziunea..."
-                    value={searchDiviziune}
-                    onChange={(e) => setSearchDiviziune(e.target.value)}
-                    style={{
-                      margin: "10px 0",
-                      padding: "5px",
-                      width: "50%",
-                      borderRadius: "5px",
-                      border: "1px solid #ccc",
-                    }}
-                  />
-                  <div>
-                    <button
-                      onClick={() =>
-                        handleToggleAllDiviziuni(
-                          true,
-                          setDiviziuni,
-                          filteredDiviziuni
-                        )
-                      }
-                    >
-                      Select all
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleToggleAllDiviziuni(
-                          false,
-                          setDiviziuni,
-                          filteredDiviziuni
-                        )
-                      }
-                    >
-                      Clear
-                    </button>
-                  </div>
+            </div>
+          )}
+
+          {portie.diviziune && (
+            <div className="modal">
+              <div className="modal-header">
+                <h3>Selectează Diviziuni</h3>
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Caută Diviziune..."
+                  value={searchDiviziune}
+                  onChange={(e) => setSearchDiviziune(e.target.value)}
+                />
+                <div className="modal-actions">
+                  <button
+                    onClick={() =>
+                      handleToggleAllDiviziuni(
+                        true,
+                        setDiviziuni,
+                        filteredDiviziuni
+                      )
+                    }
+                  >
+                    Toate
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleToggleAllDiviziuni(
+                        false,
+                        setDiviziuni,
+                        filteredDiviziuni
+                      )
+                    }
+                  >
+                    Niciuna
+                  </button>
                 </div>
-                {filteredDiviziuni.map((diviziune, index) => (
-                  <div className="option" key={index}>
+              </div>
+              <div className="modal-content">
+                {filteredDiviziuni.map((diviziune) => (
+                  <div className="option" key={diviziune}>
+                    {" "}
+                    {/* KEY: unique string */}
                     <div
-                      className="check"
+                      className={`check ${
+                        diviziuni[diviziune] ? "checked" : ""
+                      }`}
                       onClick={() => handleDiviziune(diviziune, setDiviziuni)}
-                      style={{
-                        backgroundColor: diviziuni[diviziune] ? "#646cff" : "",
-                      }}
                     ></div>
                     <p>{diviziune}</p>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        </div>
-        <div className="portie">
-          <div>
-            {portie.grupa && (
-              <div className="modal">
-                <div className="modal-header">
-                  <input
-                    type="text"
-                    placeholder="Grupa..."
-                    value={searchGrupe}
-                    onChange={(e) => setSearchGrupe(e.target.value)}
-                    style={{
-                      margin: "10px 0",
-                      padding: "5px",
-                      width: "50%",
-                      borderRadius: "5px",
-                      border: "1px solid #ccc",
-                    }}
-                  />
-                  <div>
-                    <button
-                      onClick={() =>
-                        handleToggleAllGrupe(true, setGrupe, filteredGrupe)
-                      }
-                    >
-                      Select all
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleToggleAllGrupe(false, setGrupe, filteredGrupe)
-                      }
-                    >
-                      Clear
-                    </button>
-                  </div>
+            </div>
+          )}
+
+          {portie.grupa && (
+            <div className="modal">
+              <div className="modal-header">
+                <h3>Selectează Grupe</h3>
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Caută Grupa..."
+                  value={searchGrupe}
+                  onChange={(e) => setSearchGrupe(e.target.value)}
+                />
+                <div className="modal-actions">
+                  <button
+                    onClick={() =>
+                      handleToggleAllGrupe(true, setGrupe, filteredGrupe)
+                    }
+                  >
+                    Toate
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleToggleAllGrupe(false, setGrupe, filteredGrupe)
+                    }
+                  >
+                    Niciuna
+                  </button>
                 </div>
-                {filteredGrupe.map((grupa, index) => (
-                  <div className="option" key={index}>
+              </div>
+              <div className="modal-content">
+                {filteredGrupe.map((grupa) => (
+                  <div className="option" key={grupa}>
+                    {" "}
+                    {/* KEY: unique string */}
                     <div
-                      className="check"
+                      className={`check ${grupe[grupa] ? "checked" : ""}`}
                       onClick={() => handleGrupa(grupa, setGrupe)}
-                      style={{
-                        backgroundColor: grupe[grupa] ? "#646cff" : "",
-                      }}
                     ></div>
                     <p>{grupa}</p>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        </div>
-        <div className="portie">
-          <div>
-            {portie.caenuri && (
-              <div className="modal">
-                <div className="modal-header">
-                  <input
-                    type="text"
-                    placeholder="Caen..."
-                    value={searchCaenuri}
-                    onChange={(e) => setSearchCaenuri(e.target.value)}
-                    style={{
-                      margin: "10px 0",
-                      padding: "5px",
-                      width: "50%",
-                      borderRadius: "5px",
-                      border: "1px solid #ccc",
-                    }}
-                  />
-                  <div>
-                    <button
-                      onClick={() =>
-                        handleToggleAllCaenuri(true, setCaenuri, filteredCaen)
-                      }
-                    >
-                      Select all
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleToggleAllCaenuri(false, setCaenuri, filteredCaen)
-                      }
-                    >
-                      Clear
-                    </button>
-                  </div>
+            </div>
+          )}
+
+          {portie.caenuri && (
+            <div className="modal">
+              <div className="modal-header">
+                <h3>Selectează Coduri CAEN</h3>
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Caută Cod CAEN..."
+                  value={searchCaenuri}
+                  onChange={(e) => setSearchCaenuri(e.target.value)}
+                />
+                <div className="modal-actions">
+                  <button
+                    onClick={() =>
+                      handleToggleAllCaenuri(true, setCaenuri, filteredCaen)
+                    }
+                  >
+                    Toate
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleToggleAllCaenuri(false, setCaenuri, filteredCaen)
+                    }
+                  >
+                    Niciuna
+                  </button>
                 </div>
-                {filteredCaen.map((caen, index) => (
-                  <div className="option" key={index}>
+              </div>
+              <div className="modal-content">
+                {filteredCaen.map((caen) => (
+                  <div className="option" key={caen}>
+                    {" "}
+                    {/* KEY: unique string */}
                     <div
-                      className="check"
+                      className={`check ${caenuri[caen] ? "checked" : ""}`}
                       onClick={() => handleCaen(caen, setCaenuri)}
-                      style={{
-                        backgroundColor: caenuri[caen] ? "#646cff" : "",
-                      }}
                     ></div>
                     <p>{caen}</p>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        </div>
-        <div className="portie">
-          <div>
-            {portie.departament && (
-              <div className="modal">
-                <div className="modal-header">
-                  <input
-                    type="text"
-                    placeholder="Departament..."
-                    value={searchDepartment}
-                    onChange={(e) => setSearchDepartment(e.target.value)}
-                    style={{
-                      margin: "10px 0",
-                      padding: "5px",
-                      width: "50%",
-                      borderRadius: "5px",
-                      border: "1px solid #ccc",
-                    }}
-                  />
-                  <div>
-                    <button
-                      onClick={() =>
-                        handleToggleAllDepartments(true, setJobTitles)
-                      }
-                    >
-                      Select all
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleToggleAllDepartments(false, setJobTitles)
-                      }
-                    >
-                      Clear
-                    </button>
-                  </div>
+            </div>
+          )}
+
+          {portie.departament && (
+            <div className="modal">
+              <div className="modal-header">
+                <h3>Selectează Departamente</h3>
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Caută Departament..."
+                  value={searchDepartment}
+                  onChange={(e) => setSearchDepartment(e.target.value)}
+                />
+                <div className="modal-actions">
+                  <button
+                    onClick={() =>
+                      handleToggleAllDepartments(true, setJobTitles)
+                    }
+                  >
+                    Toate
+                  </button>
+                  <button
+                    onClick={() =>
+                      handleToggleAllDepartments(false, setJobTitles)
+                    }
+                  >
+                    Niciuna
+                  </button>
                 </div>
+              </div>
+              <div className="modal-content">
                 {filteredDepartments.map((department) => (
-                  <div className="option">
+                  <div className="option" key={department}>
+                    {" "}
+                    {/* KEY: unique string */}
                     <div
-                      className="check"
+                      className={`check ${
+                        jobTitles[department]?.state ? "checked" : ""
+                      }`}
                       onClick={() => handleDepartment(department, setJobTitles)}
-                      style={{
-                        backgroundColor: jobTitles[department].state
-                          ? "#646cff"
-                          : "",
-                      }}
                     ></div>
                     <p>{department}</p>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
-        </div>
-        <div className="portie">
-          <div>
-            {portie.job_title && (
-              <div className="modal">
-                <div className="modal-header">
-                  <input
-                    type="text"
-                    placeholder="Job title..."
-                    value={searchJob}
-                    onChange={(e) => setSearchJob(e.target.value)}
-                    style={{
-                      margin: "10px 0",
-                      padding: "5px",
-                      width: "50%",
-                      borderRadius: "5px",
-                      border: "1px solid #ccc",
-                    }}
-                  />
-                  <div>
-                    <button
-                      onClick={() => handleToggleAllJobs(true, setJobTitles)}
-                    >
-                      Select all
-                    </button>
-                    <button
-                      onClick={() => handleToggleAllJobs(false, setJobTitles)}
-                    >
-                      Clear
-                    </button>
-                  </div>
+            </div>
+          )}
+
+          {portie.job_title && (
+            <div className="modal">
+              <div className="modal-header">
+                <h3>Selectează Titluri Job</h3>
+                <input
+                  type="text"
+                  className="search-input"
+                  placeholder="Caută Job..."
+                  value={searchJob}
+                  onChange={(e) => setSearchJob(e.target.value)}
+                />
+                <div className="modal-actions">
+                  <button
+                    onClick={() => handleToggleAllJobs(true, setJobTitles)}
+                  >
+                    Toate
+                  </button>
+                  <button
+                    onClick={() => handleToggleAllJobs(false, setJobTitles)}
+                  >
+                    Niciuna
+                  </button>
                 </div>
-                {Object.keys(jobTitles).map((department) =>
-                  jobTitles[department].state
-                    ? Object.keys(jobTitles[department].job_titles)
-                        .filter((jobTitle) =>
-                          jobTitle
-                            .toLowerCase()
-                            .includes(searchJob.toLowerCase())
-                        )
-                        .map((jobTitle) => (
-                          <div key={jobTitle} className="option">
+              </div>
+              <div className="modal-content">
+                {Object.keys(jobTitles).map(
+                  (department) =>
+                    jobTitles[department]?.state // Show jobs only for ACTIVE departments
+                      ? Object.keys(jobTitles[department].job_titles)
+                          .filter(
+                            (
+                              jobTitle // Filter jobs by search term
+                            ) =>
+                              jobTitle
+                                .toLowerCase()
+                                .includes(searchJob.toLowerCase())
+                          )
+                          .map((jobTitle) => (
                             <div
-                              className="check"
-                              onClick={() =>
-                                handleJob(department, jobTitle, setJobTitles)
-                              }
-                              style={{
-                                backgroundColor: jobTitles[department]
-                                  .job_titles[jobTitle]
-                                  ? "#646cff"
-                                  : "",
-                              }}
-                            ></div>
-                            <p>{jobTitle}</p>
-                          </div>
-                        ))
-                    : null
+                              className="option"
+                              key={`${department}-${jobTitle}`}
+                            >
+                              {" "}
+                              {/* KEY: composite unique */}
+                              <div
+                                className={`check ${
+                                  jobTitles[department].job_titles[jobTitle]
+                                    ? "checked"
+                                    : ""
+                                }`}
+                                onClick={() =>
+                                  handleJob(department, jobTitle, setJobTitles)
+                                }
+                              ></div>
+                              {/* Maybe add Department name for clarity? */}
+                              {/* <p><strong>{department}:</strong> {jobTitle}</p> */}
+                              <p>{jobTitle}</p>
+                            </div>
+                          ))
+                      : null // Don't render anything for inactive departments
                 )}
               </div>
-            )}
-          </div>
-        </div>
-        <div>
-          <div className="rezultat" ref={rezultatRef}>
-            {rezultatAfis && (
-              <>
-                <div className="sectiune">
-                  <h3>Nume ICP</h3>
-                  <p>{numeICP}</p>
-                </div>
-                <div className="sectiune">
-                  <h3>Sectiune</h3>
-                  {rezultat.sectiune_rezultat.map((sec, key) => (
+            </div>
+          )}
+        </div>{" "}
+        {/* End Modals Container */}
+        {/* Results Area */}
+        {rezultatAfis && (
+          <div className="rezultat-container" ref={rezultatRef}>
+            <h2>Rezultate Selectate</h2>
+            <div className="rezultat-grid">
+              <div className="rezultat-sectiune">
+                <h3>Nume ICP</h3>
+                <p>{numeICP || "-"}</p>
+              </div>
+              <div className="rezultat-sectiune">
+                <h3>Secțiuni</h3>
+                {rezultat.sectiune_rezultat.length > 0 ? (
+                  rezultat.sectiune_rezultat.map((sec, key) => (
                     <p key={key}>{sec}</p>
-                  ))}
-                </div>
-                <div className="sectiune">
-                  <h3>Diviziune</h3>
-                  {rezultat.diviziune_rezultat.map((div, key) => (
+                  ))
+                ) : (
+                  <p>-</p>
+                )}
+              </div>
+              <div className="rezultat-sectiune">
+                <h3>Diviziuni</h3>
+                {rezultat.diviziune_rezultat.length > 0 ? (
+                  rezultat.diviziune_rezultat.map((div, key) => (
                     <p key={key}>{div}</p>
-                  ))}
-                </div>
-                <div className="sectiune">
-                  <h3>Grupa</h3>
-                  {rezultat.grupa_rezultat.map((grp, key) => (
+                  ))
+                ) : (
+                  <p>-</p>
+                )}
+              </div>
+              <div className="rezultat-sectiune">
+                <h3>Grupe</h3>
+                {rezultat.grupa_rezultat.length > 0 ? (
+                  rezultat.grupa_rezultat.map((grp, key) => (
                     <p key={key}>{grp}</p>
-                  ))}
-                </div>
-                <div className="sectiune">
-                  <h3>Caen</h3>
-                  {rezultat.caen_rezultat.map((cn, key) => (
-                    <p key={key}>{cn}</p>
-                  ))}
-                </div>
-                <div className="sectiune">
-                  <h3>Cifra Afacere</h3>
-                  <p>{cifraAfacere}</p>
-                </div>
-                <div className="sectiune">
-                  <h3>Profit</h3>
-                  <p>{profit}</p>
-                </div>
-                {Object.keys(jobTitles).map((department) => {
-                  // Only proceed if the department is active (true)
-                  if (!jobTitles[department].state) return null;
+                  ))
+                ) : (
+                  <p>-</p>
+                )}
+              </div>
+              <div className="rezultat-sectiune">
+                <h3>Coduri CAEN</h3>
+                {rezultat.caen_rezultat.length > 0 ? (
+                  rezultat.caen_rezultat.map((cn, key) => <p key={key}>{cn}</p>)
+                ) : (
+                  <p>-</p>
+                )}
+              </div>
+              <div className="rezultat-sectiune">
+                <h3>Cifra Afacere</h3>
+                <p>{cifraAfacere || "-"}</p>
+              </div>
+              <div className="rezultat-sectiune">
+                <h3>Profit</h3>
+                <p>{profit || "-"}</p>
+              </div>
 
-                  // Filter job titles that are active (true)
-                  const activeJobs = Object.keys(
-                    jobTitles[department].job_titles
-                  ).filter(
-                    (jobTitle) => jobTitles[department].job_titles[jobTitle]
-                  );
+              {/* Display selected Departments and their selected Job Titles */}
+              {Object.keys(jobTitles).map((department) => {
+                if (!jobTitles[department]?.state) return null; // Skip inactive departments
 
-                  // If no job titles are active, you can return null or a message if needed
-                  if (activeJobs.length === 0) return null;
+                const activeJobs = Object.keys(
+                  jobTitles[department].job_titles
+                ).filter(
+                  (jobTitle) => jobTitles[department].job_titles[jobTitle]
+                );
 
-                  return (
-                    <div key={department} className="sectiune">
-                      <h3>{department}</h3>
-                      {activeJobs.map((jobTitle) => (
-                        <p key={`${department}-${jobTitle}`}>{jobTitle}</p>
-                      ))}
-                    </div>
-                  );
-                })}
-              </>
-            )}
+                if (activeJobs.length === 0) return null; // Skip departments with no active jobs
+
+                return (
+                  <div key={department} className="rezultat-sectiune">
+                    <h3>{department}</h3>
+                    {activeJobs.map((jobTitle) => (
+                      <p key={`${department}-${jobTitle}`}>{jobTitle}</p>
+                    ))}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
+        )}
+      </div>{" "}
+      {/* End Content Layout */}
+    </div> /* End Layout */
   );
 }
 
